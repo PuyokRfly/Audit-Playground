@@ -1,0 +1,109 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: #f0f2f5;
+}
+
+.container {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  width: 100%;
+  max-width: 800px;
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+  color: #1a202c;
+  text-align: center;
+}
+
+.subheading {
+  font-size: 0.9rem;
+  color: #718096;
+  margin-bottom: 2rem;
+  text-align: center;
+  word-wrap: break-word;
+}
+
+.reportContainer {
+  margin-top: 1.5rem;
+}
+
+.findingsTitle {
+  font-size: 1.5rem;
+  color: #2d3748;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.detectorCard {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.detectorCheck {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.detectorDescription {
+  color: #4a5568;
+  margin-bottom: 1rem;
+}
+
+.detectorMeta {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.high {
+  background-color: #fed7d7;
+  color: #c53030;
+}
+
+.medium {
+  background-color: #feebc8;
+  color: #b7791f;
+}
+
+.low {
+  background-color: #c6f6d5;
+  color: #2f855a;
+}
+
+.informational {
+  background-color: #e2e8f0;
+  color: #4a5568;
+}
+
+.confidence {
+  background-color: #dbeafe;
+  color: #2b6cb0;
+}
+
+.errorMessage {
+  color: #e53e3e;
+  font-weight: bold;
+}
