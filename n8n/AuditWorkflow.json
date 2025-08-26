@@ -1,0 +1,92 @@
+{
+  "name": "Smart Contract Audit Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "audit-trigger",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [ 250, 300 ],
+      "webhookId": "placeholder-webhook-id"
+    },
+    {
+      "parameters": {
+        "fileName": "/tmp/{{ $json.body.taskId }}.sol",
+        "data": "{{ $json.body.contractCode }}",
+        "options": {}
+      },
+      "name": "Write Contract to File",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [ 450, 300 ]
+    },
+    {
+      "parameters": {
+        "command": "slither {{ $json.filePath }} --json -",
+        "options": { "shell": true }
+      },
+      "name": "Execute Slither",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [ 650, 300 ]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "audit_results",
+        "columns": [
+          { "column": "submission_id", "value": "{{ $startNode.json.body.taskId }}" },
+          { "column": "report_json", "value": "{{ $json.stdout }}" }
+        ]
+      },
+      "name": "Save Audit Report",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [ 850, 200 ],
+      "credentials": {
+        "supabase": { "id": "placeholder-supabase-credential-id", "name": "Supabase Credentials" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "table": "submissions",
+        "filters": [
+          { "key": "id", "operator": "eq", "value": "{{ $startNode.json.body.taskId }}" }
+        ],
+        "columns": [
+          { "column": "status", "value": "completed" }
+        ]
+      },
+      "name": "Update Submission Status",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [ 850, 400 ],
+      "credentials": {
+        "supabase": { "id": "placeholder-supabase-credential-id", "name": "Supabase Credentials" }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [ [ { "node": "Write Contract to File", "type": "main", "index": 0 } ] ]
+    },
+    "Write Contract to File": {
+      "main": [ [ { "node": "Execute Slither", "type": "main", "index": 0 } ] ]
+    },
+    "Execute Slither": {
+      "main": [
+        [
+          { "node": "Save Audit Report", "type": "main", "index": 0 },
+          { "node": "Update Submission Status", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "id": "1"
+}
