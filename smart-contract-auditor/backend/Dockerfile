@@ -1,26 +1,16 @@
-# Use an official Python runtime as a parent image
-FROM python:3.10-slim
+FROM python:3.11-slim
 
-# Set the working directory in the container
-WORKDIR /app
+RUN apt-get update && apt-get install -y git build-essential libssl-dev curl wget solc
 
-# Install system dependencies required for slither
-RUN apt-get update && apt-get install -y git
-
-# Copy the requirements file into the container at /app
-COPY ./app/requirements.txt /app/
-
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Install slither-analyzer
+# install slither
 RUN pip install slither-analyzer
 
-# Copy the rest of the application's code into the container at /app
+WORKDIR /app
+
+COPY ./app/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY ./app /app
 
-# Make port 80 available to the world outside this container
-EXPOSE 80
-
-# Run uvicorn when the container launches
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
