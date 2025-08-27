@@ -1,10 +1,19 @@
 import os
 import shutil
 import httpx
-from fastapi import FastAPI, File, UploadFile, HTTPException
+import stripe
+from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from pydantic import BaseModel
 from backend.supabase_client import get_supabase_client
 from backend.ai_reporter import analyze_and_report
+
+
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
+stripe.api_key = os.getenv("STRIPE_API_KEY")
+webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
 
 app = FastAPI()
 
@@ -98,6 +107,67 @@ async def upload_contract(file: UploadFile = File(...)):
 # Pydantic model for the request body of the analysis endpoint
 class AuditAnalysisRequest(BaseModel):
     submission_id: str
+
+class CreateCheckoutSessionRequest(BaseModel):
+    submission_id: str
+
+@app.post("/create-checkout-session")
+async def create_checkout_session(request: CreateCheckoutSessionRequest):
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'usd',
+                        'product_data': {
+                            'name': 'Premium Audit',
+                        },
+                        'unit_amount': 2000,
+                    },
+                    'quantity': 1,
+                },
+            ],
+            mode='payment',
+            success_url='http://localhost:3000/results/{CHECKOUT_SESSION_ID}',
+            cancel_url='http://localhost:3000/pricing',
+            client_reference_id=request.submission_id
+        )
+        return {"id": checkout_session.id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/stripe-webhook")
+async def stripe_webhook(request: Request):
+    payload = await request.body()
+    sig_header = request.headers.get('stripe-signature')
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, webhook_secret
+        )
+    except ValueError as e:
+        # Invalid payload
+        raise HTTPException(status_code=400, detail=str(e))
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Handle the event
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        submission_id = session.get('client_reference_id')
+        if submission_id:
+            supabase = get_supabase_client()
+            try:
+                supabase.table('submissions').update({'status': 'paid'}).eq('id', submission_id).execute()
+            except Exception as e:
+                # Log the error
+                print(f"Failed to update submission status for {submission_id}: {e}")
+                raise HTTPException(status_code=500, detail="Failed to update submission status.")
+
+
+    return {"status": "success"}
 
 @app.post("/analyze-audit/")
 async def analyze_audit_endpoint(request: AuditAnalysisRequest):
