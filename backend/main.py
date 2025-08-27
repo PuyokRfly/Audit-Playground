@@ -2,7 +2,9 @@ import os
 import shutil
 import httpx
 from fastapi import FastAPI, File, UploadFile, HTTPException
+from pydantic import BaseModel
 from backend.supabase_client import get_supabase_client
+from backend.ai_reporter import analyze_and_report
 
 app = FastAPI()
 
@@ -92,3 +94,22 @@ async def upload_contract(file: UploadFile = File(...)):
         if isinstance(e, HTTPException):
             raise e
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
+
+# Pydantic model for the request body of the analysis endpoint
+class AuditAnalysisRequest(BaseModel):
+    submission_id: str
+
+@app.post("/analyze-audit/")
+async def analyze_audit_endpoint(request: AuditAnalysisRequest):
+    """
+    Endpoint to trigger the AI analysis of an audit result.
+    This is expected to be called by the n8n workflow.
+    """
+    try:
+        result = await analyze_and_report(request.submission_id)
+        return {"message": "Analysis completed successfully.", "data": result}
+    except Exception as e:
+        # The error is already logged in the analyze_and_report function.
+        # We can also log it here if needed.
+        # The submission status should have been updated to 'failed' in the function.
+        raise HTTPException(status_code=500, detail=f"An error occurred during analysis: {e}")

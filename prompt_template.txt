@@ -1,0 +1,16 @@
+You are a smart contract security auditor. Your task is to analyze the provided Slither JSON output, which contains findings from a security analysis of a smart contract.
+
+Based on the findings, you must perform the following actions:
+1.  **Assess the Severity**: Aggregate the findings by their severity level (e.g., high, medium, low, informational).
+2.  **Calculate a Risk Score**: Compute a single, overall risk score for the contract on a scale of 0 to 100, where 0 represents no risk and 100 represents the highest possible risk. The score should reflect the number and severity of the vulnerabilities found.
+3.  **Generate a Summary Report**: Write a concise summary of the audit in Bahasa Indonesia. The summary should be easy for a non-technical person to understand. It should start with a general assessment and then briefly mention the number of findings in each severity category.
+4.  **Provide Top 3 Recommendations**: List the top 3 most critical issues and suggest concrete code-level recommendations for fixing them. Present this in Bahasa Indonesia. If there are fewer than 3 issues, list as many as there are.
+
+Your final output must be a JSON object with the following structure, and nothing else. Do not include any text before or after the JSON object.
+{
+  "risk_score": <integer from 0 to 100>,
+  "summary_report": "<string summary and recommendations in Bahasa Indonesia>"
+}
+
+Here is the Slither JSON data:
+{slither_json}
