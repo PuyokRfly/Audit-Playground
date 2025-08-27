@@ -1,0 +1,120 @@
+{
+  "name": "Audit Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/audit",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "a1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6"
+    },
+    {
+      "parameters": {
+        "url": "http://fastapi:8000/audit",
+        "options": {},
+        "bodyParametersJson": "{\n\t\"user_id\": \"{{$json.body.user_id}}\",\n\t\"contract_code\": \"{{$json.body.contract_code}}\"\n}",
+        "sendBody": true
+      },
+      "name": "HTTP Request - Audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://<YOUR_SUPABASE_PROJECT_REF>.supabase.co/rest/v1/audit_results",
+        "authentication": "headerAuth",
+        "options": {
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          }
+        },
+        "sendBody": true,
+        "bodyParametersJson": "{{$node[\"HTTP Request - Audit\"].json}}",
+        "httpHeaderAuth": {
+          "name": "apikey",
+          "value": "<YOUR_SUPABASE_SERVICE_ROLE_KEY>"
+        }
+      },
+      "name": "Save to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        680,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase-service-key",
+          "name": "Supabase Service Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200,
+          "responseData": "{\n  \"submission_id\": \"{{$node[\\\"HTTP Request - Audit\\\"].json.submission_id}}\",\n  \"link\": \"https://yourapp.com/audit/status/{{$node[\\\"HTTP Request - Audit\\\"].json.submission_id}}\"\n}"
+        }
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        900,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Audit": {
+      "main": [
+        [
+          {
+            "node": "Save to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
